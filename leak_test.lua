@@ -235,6 +235,7 @@ before = collect()
 for i = 1, 10 do
   run()
 end
+session = nil
 after = collect()
 
 if before ~= after then

@@ -11,7 +11,7 @@ CFLAGS ?= -ansi -O0 -g3 -Wall -Wextra -Werror -Wconversion \
 	-Wstrict-prototypes -Wno-unused-parameter -pedantic
 CFLAGS += -fPIC -std=c99
 CFLAGS += -DMPACK_DEBUG_REGISTRY_LEAK
-LDFLAGS ?= -L/usr/local/lib -lluajit
+LDFLAGS += -L/usr/local/lib -lluajit
 
 INCLUDES = -I/usr/local/include/luajit-2.1 -Ilibmpack/src
 
@@ -28,10 +28,13 @@ clean:
 test:
 	$(BUSTED) -o gtest test.lua
 
+asan: mpack.so
+	DYLD_INSERT_LIBRARIES=/usr/local/Cellar/llvm/18.1.5/lib/clang/18/lib/darwin/libclang_rt.asan_osx_dynamic.dylib luajit leak_test.lua
+
 valgrind: $(BUSTED) $(MPACK)
 	valgrind $(VALGRIND_OPTS) $(BUSTED) test.lua
 
 mpack.so: lmpack.c libmpack/src/mpack.c
-	$(CC) -shared $(CFLAGS) $(INCLUDES) $(LDFLAGS) $< -o $@ $(LIBS)
+	$(CC) -shared $(CFLAGS) $(INCLUDES) $(LDFLAGS) $< -o $@
 
-.PHONY: all clean depsclean install test gdb valgrind ci-test release
+.PHONY: all clean test valgrind asan

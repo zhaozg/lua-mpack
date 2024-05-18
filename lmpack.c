@@ -35,7 +35,7 @@
 # include <mpack.h>
 #else
 # define MPACK_API static
-# include "mpack-src/src/mpack.c"
+# include "libmpack/src/mpack.c"
 #endif
 
 #define UNPACKER_META_NAME "mpack.Unpacker"
@@ -43,7 +43,7 @@
 #define SESSION_META_NAME "mpack.Session"
 #define NIL_NAME "mpack.NIL"
 
-/* 
+/*
  * TODO(tarruda): When targeting lua 5.3 and being compiled with `long long`
  * support(not -ansi), we should make use of lua 64 bit integers for
  * representing msgpack integers, since `double` can't represent the full range.
@@ -257,7 +257,7 @@ static int lmpack_unpacker_new(lua_State *L)
   Unpacker *rv;
 
   if (lua_gettop(L) > 1)
-    return luaL_error(L, "expecting at most 1 table argument"); 
+    return luaL_error(L, "expecting at most 1 table argument");
 
   rv = lua_newuserdata(L, sizeof(*rv));
   rv->parser = malloc(sizeof(*rv->parser));
@@ -281,7 +281,7 @@ static int lmpack_unpacker_new(lua_State *L)
     lua_getfield(L, 1, "ext");
     if (!lua_isnil(L, -1)) {
       if (!lua_istable(L, -1))
-        return luaL_error(L, "\"ext\" option must be a table"); 
+        return luaL_error(L, "\"ext\" option must be a table");
       lmpack_shallow_copy(L);
     }
     rv->ext = lmpack_ref(L, rv->reg);
@@ -356,8 +356,8 @@ static void lmpack_parse_exit(mpack_parser_t *parser, mpack_node_t *node)
           /* stack:
            *
            * -1: ext unpacker function
-           * -2: ext unpackers table 
-           * -3: ext string 
+           * -2: ext unpackers table
+           * -3: ext string
            *
            * We want to call the ext unpacker function with the type and string
            * as arguments, so push those now
@@ -369,7 +369,7 @@ static void lmpack_parse_exit(mpack_parser_t *parser, mpack_node_t *node)
            *
            * -1: returned object
            * -2: ext unpackers table
-           * -3: ext string 
+           * -3: ext string
            */
           lua_replace(L, -3);
         } else {
@@ -403,7 +403,7 @@ static void lmpack_parse_exit(mpack_parser_t *parser, mpack_node_t *node)
     } else {
       assert(parent->tok.type == MPACK_TOKEN_MAP);
       if (parent->key_visited) {
-        /* save the key on the registry */ 
+        /* save the key on the registry */
         lua_pushvalue(L, -2);
         parent->data[1].i = lmpack_ref(L, unpacker->reg);
       } else {
@@ -428,7 +428,7 @@ static int lmpack_unpacker_unpack_str(lua_State *L, Unpacker *unpacker,
                          "Unpacker or the module's \"unpack\" function if you "
                          "need to unpack from the ext handler");
   }
-  
+
   do {
     unpacker->unpacking = 1;
     rv = mpack_parse(unpacker->parser, str, len, lmpack_parse_enter,
@@ -457,9 +457,9 @@ static int lmpack_unpacker_unpack(lua_State *L)
   size_t len, offset;
   const char *str, *str_init;
   Unpacker *unpacker;
-  
+
   if ((argc = lua_gettop(L)) > 3 || argc < 2)
-    return luaL_error(L, "expecting between 2 and 3 arguments"); 
+    return luaL_error(L, "expecting between 2 and 3 arguments");
 
   unpacker = lmpack_check_unpacker(L, 1);
   unpacker->L = L;
@@ -494,7 +494,7 @@ static int lmpack_packer_new(lua_State *L)
   Packer *rv;
 
   if (lua_gettop(L) > 1)
-    return luaL_error(L, "expecting at most 1 table argument"); 
+    return luaL_error(L, "expecting at most 1 table argument");
 
   rv = lua_newuserdata(L, sizeof(*rv));
   rv->parser = malloc(sizeof(*rv->parser));
@@ -519,7 +519,7 @@ static int lmpack_packer_new(lua_State *L)
     lua_getfield(L, 1, "ext");
     if (!lua_isnil(L, -1)) {
       if (!lua_istable(L, -1))
-        return luaL_error(L, "\"ext\" option must be a table"); 
+        return luaL_error(L, "\"ext\" option must be a table");
       lmpack_shallow_copy(L);
     }
     rv->ext = lmpack_ref(L, rv->reg);
@@ -527,7 +527,7 @@ static int lmpack_packer_new(lua_State *L)
     if (!lua_isnil(L, -1)) {
       if (!lua_isboolean(L, -1) && !lua_isfunction(L, -1))
         return luaL_error(L,
-            "\"is_bin\" option must be a boolean or function"); 
+            "\"is_bin\" option must be a boolean or function");
       rv->is_bin = lua_toboolean(L, -1);
       if (lua_isfunction(L, -1)) rv->is_bin_fn = lmpack_ref(L, rv->reg);
       else lua_pop(L, 1);
@@ -661,13 +661,13 @@ static void lmpack_unparse_enter(mpack_parser_t *parser, mpack_node_t *node)
             luaL_error(L,
                 "the second result from ext packer must be a string");
           node->tok = mpack_pack_ext((int)ext, lmpack_objlen(L, NULL));
-          /* stack: 
+          /* stack:
            *
            * -1: ext string
            * -2: ext type
            * -3: ext packers table
            * -4: metatable
-           * -5: original table 
+           * -5: original table
            *
            * We want to leave only the returned ext string, so
            * replace -5 with the string and pop 3
@@ -676,11 +676,11 @@ static void lmpack_unparse_enter(mpack_parser_t *parser, mpack_node_t *node)
           lua_pop(L, 3);
           break;  /* done */
         } else {
-          /* stack: 
+          /* stack:
            *
            * -1: ext packers table
            * -2: metatable
-           * -3: original table 
+           * -3: original table
            *
            * We want to leave only the original table since it will be handled
            * below, so pop 2
@@ -753,7 +753,7 @@ static int lmpack_packer_pack(lua_State *L)
   luaL_Buffer buffer;
 
   if ((argc = lua_gettop(L)) != 2)
-    return luaL_error(L, "expecting exactly 2 arguments"); 
+    return luaL_error(L, "expecting exactly 2 arguments");
 
   packer = lmpack_check_packer(L, 1);
   packer->L = L;
@@ -821,7 +821,7 @@ static int lmpack_session_new(lua_State *L)
     lua_getfield(L, 1, "unpack");
     if (!lmpack_isunpacker(L, -1)) {
       return luaL_error(L,
-          "\"unpack\" option must be a " UNPACKER_META_NAME " instance"); 
+          "\"unpack\" option must be a " UNPACKER_META_NAME " instance");
     }
     rv->unpacker = lmpack_ref(L, rv->reg);
   }
@@ -850,7 +850,7 @@ static int lmpack_session_receive(lua_State *L)
   Unpacker *unpacker = NULL;
 
   if ((argc = lua_gettop(L)) > 3 || argc < 2)
-    return luaL_error(L, "expecting between 2 and 3 arguments"); 
+    return luaL_error(L, "expecting between 2 and 3 arguments");
 
   session = lmpack_check_session(L, 1);
   str_init = str = luaL_checklstring(L, 2, &len);
@@ -885,7 +885,7 @@ static int lmpack_session_receive(lua_State *L)
       if (!unpacker || session->unpacked.type == MPACK_EOF)
         break;
     }
-    
+
     result = lmpack_unpacker_unpack_str(L, unpacker, &str, &len);
 
     if (result == MPACK_EOF) break;
@@ -958,7 +958,7 @@ static int lmpack_session_request(lua_State *L)
   mpack_data_t data;
 
   if (lua_gettop(L) > 2 || lua_gettop(L) < 1)
-    return luaL_error(L, "expecting 1 or 2 arguments"); 
+    return luaL_error(L, "expecting 1 or 2 arguments");
 
   session = lmpack_check_session(L, 1);
   data.i = lua_isnoneornil(L, 2) ? LUA_NOREF : lmpack_ref(L, session->reg);
@@ -985,7 +985,7 @@ static int lmpack_session_reply(lua_State *L)
   lua_Number id;
 
   if (lua_gettop(L) != 2)
-    return luaL_error(L, "expecting exactly 2 arguments"); 
+    return luaL_error(L, "expecting exactly 2 arguments");
 
   session = lmpack_check_session(L, 1);
   id = lua_tonumber(L, 2);
@@ -1005,7 +1005,7 @@ static int lmpack_session_notify(lua_State *L)
   Session *session;
 
   if (lua_gettop(L) != 1)
-    return luaL_error(L, "expecting exactly 1 argument"); 
+    return luaL_error(L, "expecting exactly 1 argument");
 
   session = lmpack_check_session(L, 1);
   result = mpack_rpc_notify(session->session, &b, &bl);
@@ -1029,7 +1029,7 @@ static int lmpack_unpack(lua_State *L)
   mpack_parser_t parser;
 
   if (lua_gettop(L) != 1)
-    return luaL_error(L, "expecting exactly 1 argument"); 
+    return luaL_error(L, "expecting exactly 1 argument");
 
   str = luaL_checklstring(L, 1, &len);
 
@@ -1071,7 +1071,7 @@ static int lmpack_pack(lua_State *L)
   luaL_Buffer buffer;
 
   if (lua_gettop(L) != 1)
-    return luaL_error(L, "expecting exactly 1 argument"); 
+    return luaL_error(L, "expecting exactly 1 argument");
 
   /* initialize packer */
   lua_newtable(L);

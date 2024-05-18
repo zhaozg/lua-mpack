@@ -1,0 +1,3 @@
+[submodule "libmpack"]
+	path = libmpack
+	url = https://github.com/libmpack/libmpack.git

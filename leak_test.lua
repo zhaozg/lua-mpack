@@ -3,7 +3,7 @@
 local mpack = require('mpack')
 local packed, unpacked
 
-function fhex(s)
+local function fhex(s)
   local rv = {}
   for h in s:gmatch('%x+') do
     rv[#rv + 1] = string.char(tonumber(h, 16))
@@ -208,7 +208,7 @@ function test_request_cb_leak()
   local _, cb = session:receive(response, 1)
 end
 
-function run()
+local function run()
   simple_unpack()
   simple_pack()
   unpack_chunks()
@@ -220,7 +220,7 @@ function run()
   test_request_cb_leak()
 end
 
-function collect()
+local function collect()
   -- run multiple times to ensure lua has a chance to reclaim all unused memomry
   for i = 1, 10 do
     collectgarbage()
@@ -230,12 +230,15 @@ end
 
 run() -- run once to "initialize" the state
 
+local before, after
 before = collect()
-run()
+for i = 1, 10 do
+  run()
+end
 after = collect()
 
 if before ~= after then
-  print('fail .. leaked '..((after - before) * 1024)..' kilobytes')
+  print('fail .. leaked '..((after - before))..' kilobytes')
   os.exit(1)
 else
   print('ok')
